@@ -102,7 +102,12 @@ namespace backend_freecipes.Controllers
         [HttpPost("authenticateToken")]
         public ActionResult AuthenticateToken(String token)
         {
+
             var jwt = VerifyToken(token);
+            if (jwt)
+            {
+                return Unauthorized();
+            }
 
             return Ok();
         }
