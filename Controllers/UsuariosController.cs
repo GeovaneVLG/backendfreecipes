@@ -26,13 +26,13 @@ namespace backend_freecipes.Controllers
         }
         [HttpGet]
         public async Task<ActionResult> GetAll()
-        { 
+        {
             var model = await _context.Usuarios.ToListAsync();
 
             return Ok(model);
         }
         [HttpPost]
-        public async Task<ActionResult>Create(UsuarioDto model)
+        public async Task<ActionResult> Create(UsuarioDto model)
         {
             Usuario novo = new Usuario()
             {
@@ -45,7 +45,7 @@ namespace backend_freecipes.Controllers
             _context.Usuarios.Add(novo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetById", new {id = novo.Id}, novo);
+            return CreatedAtAction("GetById", new { id = novo.Id }, novo);
         }
         [HttpGet("{id}")]
         public async Task<ActionResult> GetById(int id)
@@ -62,12 +62,12 @@ namespace backend_freecipes.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(int id, UsuarioDto model)
         {
-            if(id != model.Id) return BadRequest();
+            if (id != model.Id) return BadRequest();
 
             var modeloDb = await _context.Usuarios.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            if(modeloDb == null) return NotFound();
+            if (modeloDb == null) return NotFound();
 
             modeloDb.Nome = model.Nome;
             modeloDb.Senha = BCrypt.Net.BCrypt.HashPassword(model.Senha);
@@ -93,29 +93,15 @@ namespace backend_freecipes.Controllers
         }
         private void GerarLinks(Usuario model)
         {
-            model.Links.Add(new LinkDto(model.Id, Url.ActionLink(), rel:"self", metodo: "GET"));
+            model.Links.Add(new LinkDto(model.Id, Url.ActionLink(), rel: "self", metodo: "GET"));
             model.Links.Add(new LinkDto(model.Id, Url.ActionLink(), rel: "update", metodo: "PUT"));
             model.Links.Add(new LinkDto(model.Id, Url.ActionLink(), rel: "delete", metodo: "Delete"));
         }
 
         [AllowAnonymous]
-        [HttpPost("authenticateToken")]
-        public ActionResult AuthenticateToken(String token)
-        {
-
-            var jwt = VerifyToken(token);
-            if (jwt)
-            {
-                return Unauthorized();
-            }
-
-            return Ok();
-        }
-
-        [AllowAnonymous]
         [HttpPost("authenticate")]
         public ActionResult Authenticate(AuthenticateDto model)
-        { 
+        {
             var usuarioDb = _context.Usuarios
                 .Single(usuario => usuario.Email == model.Email);
 
@@ -148,34 +134,5 @@ namespace backend_freecipes.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
-        public static bool VerifyToken(string token)
-        {
-            var key = Encoding.ASCII.GetBytes("Ry74cBQva5dThwbwchR9jhbtRFnJxWSZ");
-            var validationParameters = new TokenValidationParameters()
-            {
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                IssuerSigningKey = new SymmetricSecurityKey(key)
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken validatedToken = null;
-            try
-            {
-                tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-            }
-            catch (SecurityTokenException)
-            {
-                return false;
-            }
-            catch (Exception e)
-            {
-                throw;
-            }
-            //... manual validations return false if anything untoward is discovered
-            return validatedToken != null;
-        }
-
     }
 }
