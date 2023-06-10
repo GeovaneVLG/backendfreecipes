@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -96,7 +97,16 @@ namespace backend_freecipes.Controllers
             model.Links.Add(new LinkDto(model.Id, Url.ActionLink(), rel: "update", metodo: "PUT"));
             model.Links.Add(new LinkDto(model.Id, Url.ActionLink(), rel: "delete", metodo: "Delete"));
         }
-        
+
+        [AllowAnonymous]
+        [HttpPost("authenticateToken")]
+        public ActionResult AuthenticateToken(String token)
+        {
+            var jwt = VerifyToken(token);
+
+            return Ok();
+        }
+
         [AllowAnonymous]
         [HttpPost("authenticate")]
         public ActionResult Authenticate(AuthenticateDto model)
@@ -131,6 +141,34 @@ namespace backend_freecipes.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-        
+
+        public static bool VerifyToken(string token)
+        {
+            var key = Encoding.ASCII.GetBytes("Ry74cBQva5dThwbwchR9jhbtRFnJxWSZ");
+            var validationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken validatedToken = null;
+            try
+            {
+                tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+            }
+            catch (SecurityTokenException)
+            {
+                return false;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+            //... manual validations return false if anything untoward is discovered
+            return validatedToken != null;
+        }
+
     }
 }
