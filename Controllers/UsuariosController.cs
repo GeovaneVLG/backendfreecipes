@@ -111,7 +111,7 @@ namespace backend_freecipes.Controllers
 
             var jwt = GenerateJwtToken(usuarioDb);
 
-            return Ok(new { jwtToken = jwt });
+            return Ok(new { jwtToken = jwt, usuario = usuarioDb.Id });
         }
 
         private string GenerateJwtToken(Usuario model)
